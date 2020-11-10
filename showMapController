@@ -1,0 +1,72 @@
+public with sharing class showMapController {
+    
+    @AuraEnabled(cacheable=true)
+    public static Account getAccountShippingAddress (String recordId) {
+        Account addressList = [SELECT Id, ShippingCity ,ShippingCountry, ShippingPostalCode, ShippingState, ShippingStreet
+            from Account where Id = :recordId LIMIT 1];
+        return  addressList;
+    }
+
+
+    @AuraEnabled (cacheable=true)
+    public static WeatherInfo performCallout(String city)
+    {
+        String endpoint;
+        if ( city != null ) {
+            endpoint = 'https://api.weatherbit.io/v2.0/current?city=' + city + '&key=3f90c40419ae416593d1e42285df08c1&lang=en';
+        } else {
+            endpoint = 'https://api.weatherbit.io/v2.0/current&key=3f90c40419ae416593d1e42285df08c1&lang=en';
+        }
+
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(endpoint);
+        req.setMethod('GET');
+        Http http = new Http();
+        HTTPResponse res = http.send(req);
+        JSONParser parser = JSON.createParser(res.getBody());
+
+        WeatherInfo weather = new WeatherInfo();
+
+        while (parser.nextToken() != null) {
+            if(parser.getCurrentToken() == JSONToken.FIELD_NAME) {
+                parser.nextValue();
+                if (parser.getCurrentName() == 'temp') {
+                    weather.cityTemp = Decimal.valueOf(parser.getText());
+                } else if (parser.getCurrentName() == 'state_code') {
+                    weather.state = parser.getText();
+                }  else if (parser.getCurrentName() == 'wind_spd') {
+                    weather.cityWindSpeed = (Decimal.valueOf(parser.getText())).setScale(2);
+                }  else if (parser.getCurrentName() == 'precip') {
+                    weather.cityPrecip = Decimal.valueOf(parser.getText());
+                } else if (parser.getCurrentName() == 'clouds') {
+                    weather.cityClouds = Decimal.valueOf(parser.getText());
+                } else if (parser.getCurrentName() == 'description') {
+                    weather.cityWeather = parser.getText();
+                } else if (parser.getCurrentName() == 'icon') {
+                    weather.cityIcon = ' https://www.weatherbit.io/static/img/icons/' + parser.getText() + '.png';
+                } else if (parser.getCurrentName() == 'code') {
+                    weather.cityCode = Integer.valueOf(parser.getText());
+                } else if (parser.getCurrentName() == 'city_name') {
+                    weather.cityName = parser.getText();
+                } 
+            }
+        }
+        return weather;
+    }
+
+
+    public class WeatherInfo {
+        @AuraEnabled public Decimal cityTemp;
+        @AuraEnabled public String state;
+        @AuraEnabled public Decimal cityWindSpeed;
+        @AuraEnabled public Decimal cityPrecip;
+        @AuraEnabled public Decimal cityClouds;
+        @AuraEnabled public String cityWeather;
+        @AuraEnabled public String cityIcon;
+        @AuraEnabled public Integer cityCode;
+        @AuraEnabled public String cityName;
+        
+    }
+
+
+}
