@@ -1,0 +1,49 @@
+@isTest
+global with sharing class showMapController_Test {
+    
+
+    @TestSetup
+    static void makeData(){
+        
+        Account acc = new Account();
+        acc.Name = 'Test';
+        acc.ShippingCity = 'Katowice';
+        insert acc;
+
+    }
+
+
+    @isTest
+    private static void getAccountShippingAddress_Test() {
+
+        Account acc = [SELECT Id, ShippingCity FROM Account LIMIT 1];
+
+        showMapController.getAccountShippingAddress(acc.Id);
+        System.assertEquals(acc.ShippingCity, 'Katowice');
+
+    }
+
+
+    global class MockHttpResponseGenerator implements HttpCalloutMock {
+        global HTTPResponse respond(HTTPRequest req) {
+            HttpResponse res = new HttpResponse();
+            res.setHeader('Content-Type', 'application/json');
+            res.setBody('{"city_name":"Katowice"}');
+            res.setStatusCode(200);
+            return res;
+        }
+    }
+
+
+    @isTest
+    private static void performCallout_Test() {
+
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator());
+        Test.startTest();
+        showMapController.WeatherInfo response = showMapController.performCallout('Katowice');
+        Test.stopTest();
+        System.assert(response != null);
+        
+    }
+  
+}
