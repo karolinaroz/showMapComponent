@@ -2,7 +2,7 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { getRecord } from 'lightning/uiRecordApi';
 import getAccountShippingAddress from'@salesforce/apex/showMapController.getAccountShippingAddress';
 import performCallout from'@salesforce/apex/showMapController.performCallout';
-import getForecast from'@salesforce/apex/showMapController.getForecast';
+//import getForecast from'@salesforce/apex/showMapController.getForecast';
 
 export default class showMap extends LightningElement {
 
@@ -68,8 +68,8 @@ export default class showMap extends LightningElement {
             });
 
         var result2 = await performCallout({
-            city : shippingCity, 
-            postalCode: shippingPostalCode
+            city : shippingCity
+            //postalCode: shippingPostalCode
         });
 
         this.imageUrl = result2.cityIcon;
